@@ -75,13 +75,32 @@ void ErrorPrint(int errorType) {
   // 에러종류 2: 잘못된 option 사용
   else if ( errorType == 2 )
     puts("Error: No such option!");
+	// 에러종류 3: 디렉터리 열기 실패
+	// opendir 함수는 열기 작업이 실패한 경우, NULL 포인터를 반환함과 동시에
+  // errno를 변경시키므로, 이를 이용하여 어떤 문제가 발생하였는지 출력시킴
+	else {
+    printf("Error: Path open failed: ");
+    // ENOENT: 해당하는 디렉터리가 존재하지 않는 경우
+    if ( errno == ENOENT )
+      puts("No such directory!");
+    // EACCES: 해당 디렉터리를 열 권한이 없는 경우
+    else if ( errno == EACCES )
+      puts("Permission denied!");
+    // ENOTDIR: 해당 경로명이 디렉터리가 아닌, 파일 등인 경우
+    else if ( errno == ENOTDIR )
+      puts("It is not a directory!");
+    else
+      puts("Unknown issue!");
+		return; // 디렉터리 열기 실패의 경우, 사용법과 무관한 경우이므로
+            // 사용법 출력 없이 함수를 반환함
+	}
 
   puts("Usage example:");
   puts("  ./ls");
   puts("  ./ls [option]");
   puts("  ./ls [option] [path]");
   puts("  ./ls [path]");
-  puts("(search \".\" directory by default)")
+  puts("(search \".\" directory by default)");
   puts("[option] explain:");
   puts("  -a: Print all files that include hidden files");
   puts("  -S: Sort files in order of its size");
@@ -103,21 +122,8 @@ void PrecDir(char *pathName, bool isOptionA, bool isOptionS) {
   } *fileI;
 
   // opendir 함수로 지정한 경로를 열고, 실패한 경우 에러 출력
-  // opendir 함수는 열기 작업이 실패한 경우, NULL 포인터를 반환함과 동시에
-  // errno를 변경시키므로, 이를 이용하여 어떤 문제가 발생하였는지 출력시킴
   if ( (dp = opendir(pathName)) == NULL ) {
-    printf("Error: Path open failed: ");
-    // ENOENT: 해당하는 디렉터리가 존재하지 않는 경우
-    if ( errno == ENOENT )
-      puts("No such directory!");
-    // EACCES: 해당 디렉터리를 열 권한이 없는 경우
-    else if ( errno == EACCES )
-      puts("Permission denied!");
-    // ENOTDIR: 해당 경로명이 디렉터리가 아닌, 파일 등인 경우
-    else if ( errno == ENOTDIR )
-      printf("%s is not a directory!\n", pathName);
-    else
-      puts("Unknown issue!");
+		ErrorPrint(3);
     exit(-1);
   }
 
